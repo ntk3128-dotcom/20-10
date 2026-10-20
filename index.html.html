@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chúc mừng 20/10</title>
+<style>
+:root{
+  --bg1:#ffe3ec; --bg2:#ffc2d6; --card:#fffaf9; --ink:#5a1f3a; --muted:#a2557a; --accent:#d6336c; --accent-ink:#fff;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg1:#2a0f1e; --bg2:#4a1a35; --card:#3a1629; --ink:#ffe3ec; --muted:#f0a9c4; --accent:#ff7aa8; --accent-ink:#3a0f22;}
+}
+:root[data-theme="dark"]{--bg1:#2a0f1e; --bg2:#4a1a35; --card:#3a1629; --ink:#ffe3ec; --muted:#f0a9c4; --accent:#ff7aa8; --accent-ink:#3a0f22;}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:linear-gradient(160deg,var(--bg1),var(--bg2));
+  color:var(--ink);
+  font-family:"Be Vietnam Pro","Segoe UI",system-ui,sans-serif;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+.card{
+  position:relative;z-index:1;
+  width:min(440px,90%);
+  background:var(--card);
+  border-radius:28px;
+  padding:34px 26px 28px;
+  text-align:center;
+  box-shadow:0 18px 50px rgba(214,51,108,.25);
+}
+.date{font-family:"Playfair Display",Georgia,serif;font-size:64px;font-weight:700;color:var(--accent);line-height:1}
+h1{font-family:"Playfair Display",Georgia,serif;font-size:26px;margin:10px 0 4px}
+.sub{color:var(--muted);margin:0 0 20px;font-size:15px}
+#wish{
+  min-height:96px;display:flex;align-items:center;justify-content:center;
+  font-size:18px;line-height:1.55;margin:0 0 22px;padding:0 6px;
+}
+button{
+  font:inherit;font-weight:600;border:0;cursor:pointer;
+  background:var(--accent);color:var(--accent-ink);
+  padding:13px 26px;border-radius:999px;font-size:16px;
+  transition:transform .15s;
+}
+button:hover{transform:scale(1.05)}
+button:active{transform:scale(.97)}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+#name{display:block;margin:18px auto 0;width:75%;font:inherit;font-size:14px;text-align:center;color:var(--ink);background:transparent;border:0;border-bottom:1.5px dashed var(--muted);padding:6px}
+#name::placeholder{color:var(--muted);opacity:.7}
+#name:focus{outline:none;border-bottom-style:solid;border-color:var(--accent)}
+.pop{animation:pop .45s ease}
+@keyframes pop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.pop{animation:none}button{transition:none}}
+</style>
+</head>
+<body>
+<canvas id="fx" aria-hidden="true"></canvas>
+<main class="card">
+  <div class="date">20/10</div>
+  <h1>Chúc mừng ngày Phụ nữ Việt Nam</h1>
+  <p class="sub" id="sub">Gửi đến bạn thật tuyệt vời 💐</p>
+  <p id="wish" class="pop">Chúc bạn luôn xinh đẹp, rạng rỡ và thật nhiều niềm vui!</p>
+  <button id="btn" type="button">Nhận lời chúc 🌸</button>
+  <input id="name" type="text" maxlength="30" placeholder="Nhập tên người nhận…" aria-label="Tên người nhận">
+</main>
+<script>
+const wishes=[
+  "Chúc bạn luôn xinh đẹp, rạng rỡ và thật nhiều niềm vui!",
+  "Mong mỗi ngày của bạn đều nhẹ nhàng, ngọt ngào như một bông hoa nở. 🌷",
+  "Chúc bạn luôn được yêu thương, trân trọng và sống đúng với chính mình. 💖",
+  "Chúc bạn học giỏi, làm tốt, tiền vào như nước và deadline tránh xa! ✨",
+  "Cảm ơn bạn đã làm thế giới này dịu dàng và rực rỡ hơn mỗi ngày. 🌸",
+  "Chúc bạn mãi mạnh mẽ, tự tin và hạnh phúc theo cách riêng của mình. 💪",
+  "Hôm nay hãy ăn món bạn thích, mua thứ bạn muốn và cười thật nhiều nhé! 🍰",
+  "Chúc 20/10 của bạn ngập tràn hoa, quà và những điều bất ngờ dễ thương! 🎁"
+];
+const wish=document.getElementById("wish");
+const sub=document.getElementById("sub"),nameIn=document.getElementById("name");
+function setName(n){n=n.trim();sub.textContent=n?"Gửi riêng đến "+n+" 💐":"Gửi đến bạn thật tuyệt vời 💐"}
+try{const q=new URLSearchParams(location.search).get("ten");if(q){nameIn.value=q;setName(q)}}catch(e){}
+nameIn.addEventListener("input",()=>setName(nameIn.value));
+let last=0;
+document.getElementById("btn").onclick=()=>{
+  let i;do{i=Math.floor(Math.random()*wishes.length)}while(i===last);
+  last=i;
+  wish.classList.remove("pop");void wish.offsetWidth;
+  wish.textContent=wishes[i];wish.classList.add("pop");
+  burst();
+};
+// falling petals
+const c=document.getElementById("fx"),x=c.getContext("2d");
+let W,H,items=[];
+const icons=["🌸","💖","🌷","✨","🌹"];
+function resize(){W=c.width=innerWidth;H=c.height=innerHeight}
+addEventListener("resize",resize);resize();
+function spawn(px,py,burst){
+  return{x:px??Math.random()*W,y:py??-20,s:12+Math.random()*16,
+    vy:burst?-2-Math.random()*4:.6+Math.random()*1.2,
+    vx:burst?(Math.random()-.5)*6:(Math.random()-.5)*.6,
+    r:Math.random()*6,vr:(Math.random()-.5)*.04,
+    e:icons[Math.floor(Math.random()*icons.length)],burst};
+}
+for(let i=0;i<22;i++){const p=spawn();p.y=Math.random()*H;items.push(p)}
+function burst(){for(let i=0;i<18;i++)items.push(spawn(W/2,H/2,true))}
+const still=matchMedia("(prefers-reduced-motion:reduce)").matches;
+function tick(){
+  x.clearRect(0,0,W,H);
+  items.forEach(p=>{
+    if(!still){p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;if(p.burst)p.vy+=.12}
+    x.save();x.translate(p.x,p.y);x.rotate(p.r);
+    x.font=p.s+"px serif";x.fillText(p.e,0,0);x.restore();
+  });
+  items=items.filter(p=>p.y<H+30&&!(p.burst&&p.y>H));
+  while(items.filter(p=>!p.burst).length<22)items.push(spawn());
+  requestAnimationFrame(tick);
+}
+tick();
+</script>
+</body>
+</html>
